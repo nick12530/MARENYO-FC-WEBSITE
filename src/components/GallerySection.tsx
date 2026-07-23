@@ -1,19 +1,27 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { GALLERY_ITEMS } from '../data/clubData';
+import { GalleryItem } from '../types';
 
 interface GallerySectionProps {
   isDarkMode?: boolean;
+  galleryItems?: GalleryItem[];
 }
 
-export const GallerySection: React.FC<GallerySectionProps> = ({ isDarkMode = true }) => {
+export const GallerySection: React.FC<GallerySectionProps> = ({
+  isDarkMode = true,
+  galleryItems = [],
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeItemIndex, setActiveItemIndex] = useState<number | null>(null);
-  const [likesState, setLikesState] = useState<Record<string, number>>(
-    GALLERY_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
+  const [likesState, setLikesState] = useState<Record<string, number>>(() =>
+    galleryItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {})
   );
   const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    setLikesState(galleryItems.reduce((acc, item) => ({ ...acc, [item.id]: item.likes }), {}));
+  }, [galleryItems]);
 
   const categories = [
     { id: 'all', label: 'All Moments' },
@@ -24,7 +32,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ isDarkMode = tru
     { id: 'training', label: 'Training' },
   ];
 
-  const filteredItems = GALLERY_ITEMS.filter(
+  const filteredItems = galleryItems.filter(
     (item) => selectedCategory === 'all' || item.category === selectedCategory
   );
 

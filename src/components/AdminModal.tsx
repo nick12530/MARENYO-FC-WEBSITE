@@ -27,8 +27,16 @@ import {
   Crown,
   Star,
   Image as ImageIcon,
+  Mail,
+  KeyRound,
 } from 'lucide-react';
-import { Player, MatchFixture, FanMember, NewsItem, KitItem } from '../types';
+import { Player, MatchFixture, FanMember, NewsItem, KitItem, GalleryItem } from '../types';
+import {
+  getAdminCredentials,
+  validateAdminLogin,
+  updateAdminCredentials,
+} from '../utils/adminAuth';
+import { ALL_CLUB_ASSETS } from '../data/clubData';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -37,10 +45,12 @@ interface AdminModalProps {
   fixtures: MatchFixture[];
   clubInfo: any;
   kits: KitItem[];
+  galleryItems: GalleryItem[];
   onSavePlayers: (updated: Player[]) => void;
   onSaveFixtures: (updated: MatchFixture[]) => void;
   onSaveClubInfo: (updated: any) => void;
   onSaveKits: (updated: KitItem[]) => void;
+  onSaveGallery: (updated: GalleryItem[]) => void;
   isDarkMode?: boolean;
 }
 
@@ -51,18 +61,37 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   fixtures,
   clubInfo,
   kits,
+  galleryItems,
   onSavePlayers,
   onSaveFixtures,
   onSaveClubInfo,
   onSaveKits,
+  onSaveGallery,
   isDarkMode = true,
 }) => {
-  const [passcode, setPasscode] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState<
-    'dashboard' | 'players' | 'fixtures' | 'kits' | 'members' | 'news' | 'settings'
+    'dashboard' | 'players' | 'fixtures' | 'kits' | 'gallery' | 'members' | 'news' | 'settings'
   >('dashboard');
+
+  // Admin credentials update state
+  const [credCurrentPassword, setCredCurrentPassword] = useState('');
+  const [credNewEmail, setCredNewEmail] = useState(() => getAdminCredentials().email);
+  const [credNewPassword, setCredNewPassword] = useState('');
+  const [credConfirmPassword, setCredConfirmPassword] = useState('');
+  const [credMessage, setCredMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Gallery editing state
+  const [editingGallery, setEditingGallery] = useState<GalleryItem[]>(galleryItems);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<Partial<GalleryItem> | null>(null);
+  const [isAddingGalleryItem, setIsAddingGalleryItem] = useState(false);
+
+  React.useEffect(() => {
+    setEditingGallery(galleryItems);
+  }, [galleryItems]);
 
   // Kit Editing State
   const [editingKits, setEditingKits] = useState<KitItem[]>(kits);
@@ -124,78 +153,92 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   // Fan Club Members Database State (4,000+ Active Members representation)
   const [memberSearch, setMemberSearch] = useState('');
-  const [memberFilterTier, setMemberFilterTier] = useState('All');
-  const [fanMembers, setFanMembers] = useState<FanMember[]>([
-    {
-      id: 'fm-1',
-      name: "Joseph 'Key' Odhiambo",
-      tier: 'Supporter',
-      memberId: 'MFC-2026-8841',
-      joinedDate: 'Jan 2024',
-      village: 'Sagam, Gem',
-      favoritePlayer: "Victor 'The Cannon' Otieno",
-    },
-    {
-      id: 'fm-2',
-      name: 'Achieng Mary Wandera',
-      tier: 'Supporter',
-      memberId: 'MFC-2026-1042',
-      joinedDate: 'Feb 2024',
-      village: 'Marenyo Central',
-      favoritePlayer: "Emmanuel 'Engine' Omondi",
-    },
-    {
-      id: 'fm-3',
-      name: 'Elder Ochieng Aguta',
-      tier: 'Former Player',
-      memberId: 'MFC-2026-0004',
-      joinedDate: 'May 2012',
-      village: 'Sagam Stadium Area',
-      favoritePlayer: "Dennis 'Wall of Sagam' Onyango",
-    },
-    {
-      id: 'fm-4',
-      name: "Kevin 'Lightning' Adhiambo",
-      tier: 'Current Star',
-      memberId: 'MFC-2026-[#11]',
-      joinedDate: 'Jan 2022',
-      village: 'Sagam Junction',
-    },
-    {
-      id: 'fm-5',
-      name: 'Brian Okoth Jr.',
-      tier: 'Future Talent',
-      memberId: 'MFC-2026-9031',
-      joinedDate: 'Mar 2025',
-      village: 'Gem Central',
-    },
-  ]);
+  const [memberFilterTier, setMemberFilterTier] = useState('All');  // Fan Members Registry State with Persistence
+  const [fanMembers, setFanMembers] = useState<FanMember[]>(() => {
+    const saved = localStorage.getItem('marenyo_fanmembers');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 'fm-1',
+            name: "Joseph 'Key' Odhiambo",
+            tier: 'Supporter',
+            memberId: 'MFC-2026-8841',
+            joinedDate: 'Jan 2024',
+            village: 'Sagam, Gem',
+            favoritePlayer: "Victor 'The Cannon' Otieno",
+          },
+          {
+            id: 'fm-2',
+            name: 'Achieng Mary Wandera',
+            tier: 'Supporter',
+            memberId: 'MFC-2026-1042',
+            joinedDate: 'Feb 2024',
+            village: 'Marenyo Central',
+            favoritePlayer: "Emmanuel 'Engine' Omondi",
+          },
+          {
+            id: 'fm-3',
+            name: 'Elder Ochieng Aguta',
+            tier: 'Former Player',
+            memberId: 'MFC-2026-0004',
+            joinedDate: 'May 2012',
+            village: 'Sagam Stadium Area',
+            favoritePlayer: "Dennis 'Wall of Sagam' Onyango",
+          },
+          {
+            id: 'fm-4',
+            name: "Kevin 'Lightning' Adhiambo",
+            tier: 'Current Star',
+            memberId: 'MFC-2026-#11',
+            joinedDate: 'Jan 2022',
+            village: 'Sagam Junction',
+          },
+          {
+            id: 'fm-5',
+            name: 'Brian Okoth Jr.',
+            tier: 'Future Talent',
+            memberId: 'MFC-2026-9031',
+            joinedDate: 'Mar 2025',
+            village: 'Gem Central',
+          },
+        ];
+  });
 
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberVillage, setNewMemberVillage] = useState('Sagam, Gem');
   const [newMemberTier, setNewMemberTier] = useState<any>('Supporter');
 
-  // News Items State
-  const [newsList, setNewsList] = useState<NewsItem[]>([
-    {
-      id: 'n-1',
-      title: 'Marenyo FC Triumphs in Sagam Derby Clash',
-      summary: 'Victor Otieno scored a stunning late header as Marenyo FC secured 3 points at Sagam Stadium Grounds.',
-      date: 'July 18, 2026',
-      category: 'Match Report',
-      imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
-      author: 'Marenyo Press Office',
-    },
-    {
-      id: 'n-2',
-      title: 'Active Fan Members Pass 4,000 Threshold',
-      summary: 'A landmark community achievement as supporters across Gem, Nairobi, and diaspora claim digital fan passes.',
-      date: 'July 21, 2026',
-      category: 'Community',
-      imageUrl: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=800&q=80',
-      author: 'Fan Club Secretariat',
-    },
-  ]);
+  // News Items State with Persistence
+  const [newsList, setNewsList] = useState<NewsItem[]>(() => {
+    const saved = localStorage.getItem('marenyo_news');
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            id: 'n-1',
+            title: 'Marenyo FC Triumphs in Sagam Derby Clash',
+            summary:
+              'Victor Otieno scored a stunning late header as Marenyo FC secured 3 points at Sagam Stadium Grounds.',
+            date: 'July 18, 2026',
+            category: 'Match Report',
+            imageUrl:
+              'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
+            author: 'Marenyo Press Office',
+          },
+          {
+            id: 'n-2',
+            title: 'Active Fan Members Pass 4,000 Threshold',
+            summary:
+              'A landmark community achievement as supporters across Gem, Nairobi, and diaspora claim digital fan passes.',
+            date: 'July 21, 2026',
+            category: 'Community',
+            imageUrl:
+              'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=800&q=80',
+            author: 'Fan Club Secretariat',
+          },
+        ];
+  });
 
   const [newNewsTitle, setNewNewsTitle] = useState('');
   const [newNewsSummary, setNewNewsSummary] = useState('');
@@ -205,15 +248,112 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      passcode.trim() === 'marenyo2024' ||
-      passcode.trim() === 'admin' ||
-      passcode.trim() === ''
-    ) {
+    if (validateAdminLogin(adminEmail, adminPassword)) {
       setIsAuthenticated(true);
       setLoginError('');
     } else {
-      setLoginError('Invalid admin passcode. Try "marenyo2024" or leave empty for demo access.');
+      setLoginError('Invalid admin email or password.');
+    }
+  };
+
+  const handleGalleryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingGalleryItem) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditingGalleryItem({
+          ...editingGalleryItem,
+          imageUrl: reader.result as string,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveGalleryItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGalleryItem || !editingGalleryItem.title) return;
+
+    let updatedList: GalleryItem[];
+    if (isAddingGalleryItem) {
+      const newItem: GalleryItem = {
+        id: `g-${Date.now()}`,
+        title: editingGalleryItem.title || 'New Photo',
+        category: (editingGalleryItem.category as GalleryItem['category']) || 'matches',
+        imageUrl:
+          editingGalleryItem.imageUrl ||
+          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
+        caption: editingGalleryItem.caption || 'Official Marenyo FC moment.',
+        date: editingGalleryItem.date || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        likes: Number(editingGalleryItem.likes) || 0,
+      };
+      updatedList = [newItem, ...editingGallery];
+    } else {
+      updatedList = editingGallery.map((g) =>
+        g.id === editingGalleryItem.id ? ({ ...g, ...editingGalleryItem } as GalleryItem) : g
+      );
+    }
+
+    setEditingGallery(updatedList);
+    onSaveGallery(updatedList);
+    setEditingGalleryItem(null);
+    setIsAddingGalleryItem(false);
+  };
+
+  const handleDeleteGalleryItem = (id: string) => {
+    const updated = editingGallery.filter((g) => g.id !== id);
+    setEditingGallery(updated);
+    onSaveGallery(updated);
+  };
+
+  const handleImportClubAssets = () => {
+    const existingUrls = new Set(editingGallery.map((g) => g.imageUrl));
+    const mapCategory = (cat: string): GalleryItem['category'] => {
+      const valid: GalleryItem['category'][] = ['matches', 'celebrations', 'fanclub', 'training', 'trophies'];
+      return valid.includes(cat as GalleryItem['category']) ? (cat as GalleryItem['category']) : 'fanclub';
+    };
+
+    const newItems: GalleryItem[] = ALL_CLUB_ASSETS.filter((a) => !existingUrls.has(a.url)).map(
+      (asset) => ({
+        id: asset.id,
+        title: asset.title,
+        category: mapCategory(asset.category),
+        imageUrl: asset.url,
+        caption: `Official Marenyo FC media: ${asset.title}`,
+        date: 'July 2026',
+        likes: 100,
+      })
+    );
+
+    if (newItems.length === 0) {
+      alert('All club assets are already in the gallery.');
+      return;
+    }
+
+    const updated = [...newItems, ...editingGallery];
+    setEditingGallery(updated);
+    onSaveGallery(updated);
+    alert(`Imported ${newItems.length} club image(s) into the gallery.`);
+  };
+
+  const handleUpdateCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredMessage(null);
+
+    if (credNewPassword !== credConfirmPassword) {
+      setCredMessage({ type: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
+    const result = updateAdminCredentials(credCurrentPassword, credNewEmail, credNewPassword);
+    if (result.success) {
+      setCredMessage({ type: 'success', text: 'Admin login credentials updated successfully!' });
+      setCredCurrentPassword('');
+      setCredNewPassword('');
+      setCredConfirmPassword('');
+      setCredNewEmail(getAdminCredentials().email);
+    } else {
+      setCredMessage({ type: 'error', text: result.error || 'Failed to update credentials.' });
     }
   };
 
@@ -282,10 +422,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleDeletePlayer = (id: string) => {
-    if (confirm('Are you sure you want to delete this player profile?')) {
-      const updated = players.filter((p) => p.id !== id);
-      onSavePlayers(updated);
-    }
+    const updated = players.filter((p) => p.id !== id);
+    onSavePlayers(updated);
   };
 
   // Fixture handlers
@@ -321,10 +459,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleDeleteFixture = (id: string) => {
-    if (confirm('Are you sure you want to delete this match fixture?')) {
-      const updated = fixtures.filter((f) => f.id !== id);
-      onSaveFixtures(updated);
-    }
+    const updated = fixtures.filter((f) => f.id !== id);
+    onSaveFixtures(updated);
   };
 
   // Member handlers
@@ -342,8 +478,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       village: newMemberVillage,
     };
 
-    setFanMembers([newMember, ...fanMembers]);
+    const updated = [newMember, ...fanMembers];
+    setFanMembers(updated);
+    localStorage.setItem('marenyo_fanmembers', JSON.stringify(updated));
     setNewMemberName('');
+  };
+
+  const handleDeleteMember = (id: string) => {
+    const updated = fanMembers.filter((m) => m.id !== id);
+    setFanMembers(updated);
+    localStorage.setItem('marenyo_fanmembers', JSON.stringify(updated));
   };
 
   const exportMembersCSV = () => {
@@ -356,13 +500,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'Marenyo_FC_40000_Fan_Members.csv');
+    link.setAttribute('download', 'Marenyo_FC_Fan_Members.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // News handler
+  // News handlers
   const handleAddNews = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNewsTitle.trim()) return;
@@ -377,9 +521,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       author: 'Official Club Secretariat',
     };
 
-    setNewsList([newArticle, ...newsList]);
+    const updated = [newArticle, ...newsList];
+    setNewsList(updated);
+    localStorage.setItem('marenyo_news', JSON.stringify(updated));
     setNewNewsTitle('');
     setNewNewsSummary('');
+  };
+
+  const handleDeleteNews = (id: string) => {
+    if (confirm('Are you sure you want to delete this news article?')) {
+      const updated = newsList.filter((n) => n.id !== id);
+      setNewsList(updated);
+      localStorage.setItem('marenyo_news', JSON.stringify(updated));
+    }
   };
 
   const filteredMembers = fanMembers.filter((m) => {
@@ -440,21 +594,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             <div>
               <h4 className="text-2xl font-black italic uppercase">Secretariat Authentication</h4>
               <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
-                Enter official passcode to access player roster controls, fixtures, and 40,000+ fan member directory.
+                Enter official admin email and password to access player roster controls, gallery media, fixtures, and fan member directory.
               </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <input
-                  type="password"
-                  placeholder="Enter Passcode (Default: marenyo2024)"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className={`w-full border rounded-2xl px-4 py-3.5 text-xs text-center font-mono focus:outline-none focus:border-[#FF6321] transition-colors ${
-                    isDarkMode ? 'bg-[#0a0a0a] border-white/10 text-white placeholder-gray-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
-                  }`}
-                />
+                <label className={`block text-[10px] font-bold uppercase tracking-widest mb-1 text-left ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                  Admin Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-gray-500" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="nicholasgabriel12530@gmail.com"
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                    className={`w-full border rounded-2xl pl-10 pr-4 py-3.5 text-xs focus:outline-none focus:border-[#FF6321] transition-colors ${
+                      isDarkMode ? 'bg-[#0a0a0a] border-white/10 text-white placeholder-gray-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-[10px] font-bold uppercase tracking-widest mb-1 text-left ${isDarkMode ? 'text-gray-400' : 'text-slate-500'}`}>
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-gray-500" />
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter admin password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className={`w-full border rounded-2xl pl-10 pr-4 py-3.5 text-xs focus:outline-none focus:border-[#FF6321] transition-colors ${
+                      isDarkMode ? 'bg-[#0a0a0a] border-white/10 text-white placeholder-gray-500' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                    }`}
+                  />
+                </div>
               </div>
 
               {loginError && (
@@ -531,6 +711,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               >
                 <Shirt className="w-4 h-4" />
                 <span>Club Jerseys ({editingKits.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black italic uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'gallery'
+                    ? 'bg-[#FF6321] text-black shadow-md'
+                    : isDarkMode
+                    ? 'bg-[#0a0a0a] text-gray-400 border border-white/10 hover:text-white'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:text-slate-900'
+                }`}
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>Gallery ({editingGallery.length})</span>
               </button>
 
               <button
@@ -1149,6 +1343,36 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </button>
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-black italic uppercase">Manage Official Match Kits</h4>
+                  <button
+                    onClick={() => {
+                      const newKit: KitItem = {
+                        id: `kit-${Date.now()}`,
+                        name: 'New Match Kit',
+                        type: 'Third Kit',
+                        primaryColor: '#FF6600',
+                        secondaryColor: '#111827',
+                        badgeBg: '#FF6600',
+                        accentHex: '#FF6321',
+                        bgGradient: 'from-orange-950/40 via-amber-950/20 to-[#0a0a0a]',
+                        description: 'Official custom match kit for Marenyo FC.',
+                        defaultName: 'MARENYO',
+                        defaultNumber: 10,
+                        customFrontImage: null,
+                        customBackImage: null,
+                      };
+                      const updated = [newKit, ...editingKits];
+                      setEditingKits(updated);
+                      onSaveKits(updated);
+                    }}
+                    className="bg-[#FF6321] text-black px-4 py-2 rounded-full font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer flex items-center gap-1.5 shadow-md"
+                  >
+                    <Plus className="w-4 h-4 text-black" />
+                    <span>+ Add New Kit</span>
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-1">
                   {editingKits.map((kit) => (
                     <div
@@ -1164,10 +1388,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           </span>
                           <h5 className="text-base font-black italic uppercase">{kit.name}</h5>
                         </div>
-                        <div
-                          className="w-5 h-5 rounded-full border border-white/30 shadow"
-                          style={{ backgroundColor: kit.primaryColor }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-5 h-5 rounded-full border border-white/30 shadow"
+                            style={{ backgroundColor: kit.primaryColor }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = editingKits.filter((k) => k.id !== kit.id);
+                              setEditingKits(updated);
+                              onSaveKits(updated);
+                            }}
+                            className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-black transition-colors"
+                            title="Delete Kit"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* FRONT & BACK IMAGE UPLOAD CARDS */}
@@ -1385,6 +1623,203 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </div>
             )}
 
+            {/* GALLERY / MEDIA MANAGEMENT TAB */}
+            {activeTab === 'gallery' && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="text-lg font-black italic uppercase flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-[#FF6321]" /> Picture Gallery & Media Library
+                    </h4>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
+                      Manage all club photos shown in the website gallery. Upload new images or import from bundled club assets.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleImportClubAssets}
+                      className="bg-white/10 border border-white/20 text-white px-4 py-2 rounded-full font-black uppercase italic text-xs tracking-wider hover:bg-[#FF6321] hover:text-black hover:border-[#FF6321] transition-all cursor-pointer flex items-center gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" /> Import Club Assets
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingGalleryItem(true);
+                        setEditingGalleryItem({
+                          title: '',
+                          category: 'matches',
+                          caption: '',
+                          date: 'July 2026',
+                          likes: 0,
+                          imageUrl: '',
+                        });
+                      }}
+                      className="bg-[#FF6321] text-black px-4 py-2 rounded-full font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer flex items-center gap-2 shadow-md"
+                    >
+                      <Plus className="w-4 h-4" /> Add Photo
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[45vh] overflow-y-auto pr-1">
+                  {editingGallery.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-3 rounded-2xl border space-y-2 ${
+                        isDarkMode ? 'bg-[#0a0a0a] border-white/10' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <div className="aspect-square rounded-xl overflow-hidden bg-black/40 border border-white/10">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <h5 className="text-xs font-black italic uppercase truncate">{item.title}</h5>
+                        <p className="text-[10px] text-[#FF6321] font-bold uppercase">{item.category}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingGalleryItem(false);
+                            setEditingGalleryItem(item);
+                          }}
+                          className="flex-1 p-1.5 rounded-lg bg-white/10 hover:bg-[#FF6321] hover:text-black transition-colors text-[10px] font-bold uppercase"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 mx-auto" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalleryItem(item.id)}
+                          className="flex-1 p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-black transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mx-auto" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {editingGalleryItem && (
+                  <form
+                    onSubmit={handleSaveGalleryItem}
+                    className={`p-6 rounded-2xl border space-y-4 ${
+                      isDarkMode ? 'bg-[#0a0a0a] border-white/20' : 'bg-slate-100 border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-black italic uppercase text-[#FF6321]">
+                        {isAddingGalleryItem ? 'Add New Gallery Photo' : `Edit: ${editingGalleryItem.title}`}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setEditingGalleryItem(null)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1">Photo Title *</label>
+                        <input
+                          type="text"
+                          required
+                          value={editingGalleryItem.title || ''}
+                          onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, title: e.target.value })}
+                          className={`w-full border rounded-xl p-2.5 text-xs ${
+                            isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1">Category</label>
+                        <select
+                          value={editingGalleryItem.category || 'matches'}
+                          onChange={(e) =>
+                            setEditingGalleryItem({
+                              ...editingGalleryItem,
+                              category: e.target.value as GalleryItem['category'],
+                            })
+                          }
+                          className={`w-full border rounded-xl p-2.5 text-xs ${
+                            isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        >
+                          <option value="matches">Matchday Action</option>
+                          <option value="celebrations">Celebrations</option>
+                          <option value="fanclub">Fan Club</option>
+                          <option value="trophies">Trophies</option>
+                          <option value="training">Training</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase mb-1">Caption</label>
+                      <textarea
+                        rows={2}
+                        value={editingGalleryItem.caption || ''}
+                        onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, caption: e.target.value })}
+                        className={`w-full border rounded-xl p-2.5 text-xs ${
+                          isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase mb-1">Photo Image</label>
+                      <div className="flex flex-col sm:flex-row items-center gap-3">
+                        {editingGalleryItem.imageUrl && (
+                          <img
+                            src={editingGalleryItem.imageUrl}
+                            alt="Preview"
+                            className="w-16 h-16 rounded-xl object-cover border border-white/20"
+                          />
+                        )}
+                        <input
+                          type="text"
+                          placeholder="Image URL or upload below..."
+                          value={editingGalleryItem.imageUrl || ''}
+                          onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, imageUrl: e.target.value })}
+                          className={`flex-1 border rounded-xl p-2.5 text-xs ${
+                            isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                        <label className="px-4 py-2.5 rounded-xl bg-[#FF6321] text-black hover:bg-white transition-colors text-xs font-bold uppercase cursor-pointer flex items-center gap-2 whitespace-nowrap">
+                          <Upload className="w-4 h-4" /> Upload
+                          <input type="file" accept="image/*" onChange={handleGalleryImageUpload} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="submit"
+                        className="bg-[#FF6321] text-black px-6 py-2.5 rounded-full font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer shadow-md"
+                      >
+                        Save Gallery Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingGalleryItem(null)}
+                        className="px-6 py-2.5 rounded-full border text-xs font-bold uppercase cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
             {/* TAB 4: FAN MEMBER REGISTRY (40,000+ Active Members) */}
             {activeTab === 'members' && (
               <div className="space-y-6">
@@ -1449,6 +1884,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         <th className="p-3">Tier Pass</th>
                         <th className="p-3">Village / Location</th>
                         <th className="p-3">Joined Date</th>
+                        <th className="p-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-500/10 font-medium">
@@ -1463,6 +1899,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           </td>
                           <td className="p-3">{m.village}</td>
                           <td className="p-3 text-gray-400">{m.joinedDate}</td>
+                          <td className="p-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMember(m.id)}
+                              className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-black transition-colors"
+                              title="Delete Member"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1512,7 +1958,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     <div key={n.id} className={`p-4 rounded-2xl border ${isDarkMode ? 'bg-[#0a0a0a] border-white/10' : 'bg-slate-50 border-slate-200'}`}>
                       <div className="flex items-center justify-between text-xs font-bold text-[#FF6321] mb-1">
                         <span>{n.category} • {n.date}</span>
-                        <span>By {n.author}</span>
+                        <div className="flex items-center gap-3">
+                          <span>By {n.author}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteNews(n.id)}
+                            className="p-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-black transition-colors"
+                            title="Delete Article"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                       <h5 className="font-black italic text-base uppercase">{n.title}</h5>
                       <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>{n.summary}</p>
@@ -1595,8 +2051,97 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     }}
                     className="bg-[#FF6321] text-black px-6 py-2.5 rounded-full font-black uppercase italic text-xs tracking-wider cursor-pointer"
                   >
-                    Save Settings
+                    Save Club Settings
                   </button>
+                </div>
+
+                {/* Admin Login Credentials Management */}
+                <div className={`p-6 rounded-2xl border space-y-4 ${
+                  isDarkMode ? 'bg-[#0a0a0a] border-white/10' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <KeyRound className="w-5 h-5 text-[#FF6321]" />
+                    <h5 className="text-sm font-black italic uppercase">Admin Login Credentials</h5>
+                  </div>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
+                    Update the email and password used to access this admin portal. Current login: {getAdminCredentials().email}
+                  </p>
+
+                  {credMessage && (
+                    <div className={`p-3 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                      credMessage.type === 'success'
+                        ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                    }`}>
+                      {credMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                      {credMessage.text}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase mb-1">Current Password *</label>
+                      <input
+                        type="password"
+                        required
+                        value={credCurrentPassword}
+                        onChange={(e) => setCredCurrentPassword(e.target.value)}
+                        placeholder="Enter current password to confirm"
+                        className={`w-full border rounded-xl p-2.5 text-xs ${
+                          isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1">New Admin Email *</label>
+                        <input
+                          type="email"
+                          required
+                          value={credNewEmail}
+                          onChange={(e) => setCredNewEmail(e.target.value)}
+                          className={`w-full border rounded-xl p-2.5 text-xs ${
+                            isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase mb-1">New Password *</label>
+                        <input
+                          type="password"
+                          required
+                          minLength={6}
+                          value={credNewPassword}
+                          onChange={(e) => setCredNewPassword(e.target.value)}
+                          className={`w-full border rounded-xl p-2.5 text-xs ${
+                            isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase mb-1">Confirm New Password *</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        value={credConfirmPassword}
+                        onChange={(e) => setCredConfirmPassword(e.target.value)}
+                        className={`w-full border rounded-xl p-2.5 text-xs ${
+                          isDarkMode ? 'bg-[#111111] border-white/10 text-white' : 'bg-white border-slate-300 text-slate-900'
+                        }`}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-[#FF6321] text-black px-6 py-2.5 rounded-full font-black uppercase italic text-xs tracking-wider cursor-pointer hover:bg-white transition-all"
+                    >
+                      Update Login Credentials
+                    </button>
+                  </form>
                 </div>
               </div>
             )}

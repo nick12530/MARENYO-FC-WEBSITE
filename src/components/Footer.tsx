@@ -1,5 +1,6 @@
 import React from 'react';
 import { Facebook, Instagram, Twitter, Youtube, ArrowUp, Lock, Users, Shield } from 'lucide-react';
+import { CLUB_INFO } from '../data/clubData';
 
 interface FooterProps {
   onOpenAdmin: () => void;
@@ -26,8 +27,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin, onOpenRosterTab, is
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#FF6321] text-black font-black italic flex items-center justify-center text-lg shadow-md shadow-[#FF6321]/30">
-                M
+              <div className="w-10 h-10 rounded-full bg-black border border-[#FF6321] overflow-hidden flex items-center justify-center p-0.5 shadow-md shadow-[#FF6321]/30 flex-shrink-0">
+                <img src={CLUB_INFO.logoUrl} alt="Marenyo FC Crest" className="w-full h-full object-cover rounded-full" />
               </div>
               <span className="font-black italic text-2xl tracking-tighter text-white uppercase">
                 MARENYO <span className="text-[#FF6321]">FC</span>

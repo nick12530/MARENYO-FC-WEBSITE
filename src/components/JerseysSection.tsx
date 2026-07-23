@@ -39,8 +39,24 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
   const [numberColor, setNumberColor] = useState<string>('#FFFFFF');
   const [isAutoRotating, setIsAutoRotating] = useState<boolean>(true);
 
+  const fallbackKit: KitItem = {
+    id: 'default-kit',
+    name: 'Marenyo FC Kit',
+    type: 'Match Kit',
+    primaryColor: '#FF6600',
+    secondaryColor: '#111827',
+    badgeBg: '#FF6600',
+    accentHex: '#FF6321',
+    bgGradient: 'from-orange-950/40 via-amber-950/20 to-[#0a0a0a]',
+    description: 'Official Marenyo FC Match Kit.',
+    defaultName: 'MARENYO',
+    defaultNumber: 10,
+    customFrontImage: null,
+    customBackImage: null,
+  };
+
   const activeKitIndex = kits.findIndex((k) => k.id === selectedKitId);
-  const activeKit = kits[activeKitIndex >= 0 ? activeKitIndex : 0] || kits[0];
+  const activeKit = kits.length > 0 ? (kits[activeKitIndex >= 0 ? activeKitIndex : 0] || kits[0]) : fallbackKit;
 
   // Auto Rotation effect
   useEffect(() => {
@@ -69,7 +85,7 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
 
   return (
     <section
-      id="jerseys"
+      id="kits"
       className={`relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden transition-colors duration-300 ${
         isDarkMode
           ? 'bg-gradient-to-b from-[#0a0a0a] via-[#111111] to-[#0a0a0a] text-white'
@@ -119,7 +135,7 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
             }`}
           >
             Explore Marenyo FC&apos;s official match kits uploaded directly by the Secretariat.
-            Watch the rotating jersey display and personalize your back print preview in real-time.
+            Watch the rotating kit roster and interactive 3D jersey display.
           </motion.p>
         </div>
 
@@ -156,82 +172,94 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
 
             {/* ROTATING DISPLAY COLUMN CARDS */}
             <div className="space-y-3">
-              {kits.map((kit, idx) => {
-                const isActive = kit.id === selectedKitId;
-                return (
-                  <motion.button
-                    key={kit.id}
-                    onClick={() => {
-                      setSelectedKitId(kit.id);
-                      setIsFlipped(false);
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group flex items-center justify-between gap-4 ${
-                      isActive
-                        ? isDarkMode
-                          ? 'bg-[#181818] border-[#FF6321] shadow-xl shadow-[#FF6321]/10'
-                          : 'bg-white border-[#FF6321] shadow-lg shadow-[#FF6321]/10'
-                        : isDarkMode
-                        ? 'bg-[#111111]/80 border-white/5 hover:border-white/20'
-                        : 'bg-white/80 border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    {/* Active Accent Bar */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeBar"
-                        className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#FF6321]"
-                      />
-                    )}
-
-                    <div className="flex items-center gap-3">
-                      {/* Thumbnail photo or color badge */}
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-black/40 border border-white/10 flex-shrink-0 relative flex items-center justify-center">
-                        {kit.customFrontImage ? (
-                          <img
-                            src={kit.customFrontImage}
-                            alt={kit.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className="w-full h-full flex items-center justify-center"
-                            style={{ backgroundColor: kit.primaryColor }}
-                          >
-                            <Shirt className="w-6 h-6 text-white drop-shadow" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-[#FF6321]">
-                          {kit.type}
-                        </span>
-                        <h4 className="text-sm font-black italic uppercase font-montserrat tracking-tight">
-                          {kit.name}
-                        </h4>
-                        <p className="text-[10px] text-gray-500 line-clamp-1">
-                          Default: #{kit.defaultNumber} {kit.defaultName}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
+              {kits.length === 0 ? (
+                <div className={`p-6 rounded-2xl border text-center ${
+                  isDarkMode ? 'bg-[#111111]/80 border-white/5 text-gray-400' : 'bg-white/80 border-slate-200 text-slate-600'
+                }`}>
+                  <Shirt className="w-8 h-8 text-[#FF6321] mx-auto mb-2 opacity-60" />
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#FF6321]">Default Club Armor Active</p>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Upload custom kit designs and photos in the Admin Portal to populate this roster.
+                  </p>
+                </div>
+              ) : (
+                kits.map((kit, idx) => {
+                  const isActive = kit.id === selectedKitId;
+                  return (
+                    <motion.button
+                      key={kit.id}
+                      onClick={() => {
+                        setSelectedKitId(kit.id);
+                        setIsFlipped(false);
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group flex items-center justify-between gap-4 ${
+                        isActive
+                          ? isDarkMode
+                            ? 'bg-[#181818] border-[#FF6321] shadow-xl shadow-[#FF6321]/10'
+                            : 'bg-white border-[#FF6321] shadow-lg shadow-[#FF6321]/10'
+                          : isDarkMode
+                          ? 'bg-[#111111]/80 border-white/5 hover:border-white/20'
+                          : 'bg-white/80 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {/* Active Accent Bar */}
                       {isActive && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#FF6321] text-black text-[9px] font-black uppercase italic animate-pulse">
-                          Active
-                        </span>
+                        <motion.div
+                          layoutId="activeBar"
+                          className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#FF6321]"
+                        />
                       )}
-                      <ChevronRight
-                        className={`w-4 h-4 transition-transform ${
-                          isActive ? 'text-[#FF6321] translate-x-1' : 'text-gray-500'
-                        }`}
-                      />
-                    </div>
-                  </motion.button>
-                );
-              })}
+
+                      <div className="flex items-center gap-3">
+                        {/* Thumbnail photo or color badge */}
+                        <div className="w-12 h-12 rounded-xl overflow-hidden bg-black/40 border border-white/10 flex-shrink-0 relative flex items-center justify-center">
+                          {kit.customFrontImage ? (
+                            <img
+                              src={kit.customFrontImage}
+                              alt={kit.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex items-center justify-center"
+                              style={{ backgroundColor: kit.primaryColor }}
+                            >
+                              <Shirt className="w-6 h-6 text-white drop-shadow" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#FF6321]">
+                            {kit.type}
+                          </span>
+                          <h4 className="text-sm font-black italic uppercase font-montserrat tracking-tight">
+                            {kit.name}
+                          </h4>
+                          <p className="text-[10px] text-gray-500 line-clamp-1">
+                            Default: #{kit.defaultNumber} {kit.defaultName}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {isActive && (
+                          <span className="px-2 py-0.5 rounded-full bg-[#FF6321] text-black text-[9px] font-black uppercase italic animate-pulse">
+                            Active
+                          </span>
+                        )}
+                        <ChevronRight
+                          className={`w-4 h-4 transition-transform ${
+                            isActive ? 'text-[#FF6321] translate-x-1' : 'text-gray-500'
+                          }`}
+                        />
+                      </div>
+                    </motion.button>
+                  );
+                })
+              )}
             </div>
 
             {/* Quick Admin Note */}
@@ -437,83 +465,29 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* REAL-TIME PRINTING PERSONALIZATION PREVIEW (NO BUYING / NO PRICING) */}
+            {/* Streamlined Kit Details Info */}
             <div
-              className={`w-full max-w-lg p-6 rounded-3xl border space-y-4 shadow-xl transition-all ${
+              className={`w-full max-w-lg p-5 rounded-3xl border flex items-center justify-between shadow-lg ${
                 isDarkMode ? 'bg-[#111111]/80 border-white/10' : 'bg-white border-slate-200'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-black uppercase tracking-widest text-[#FF6321] font-montserrat flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" /> Fan Print Preview & Personalization
-                </h4>
-                <span className={`text-[10px] ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
-                  Live Back Printing Simulator
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Custom Name */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-4 h-4 rounded-full border border-white/30"
+                  style={{ backgroundColor: activeKit.primaryColor }}
+                />
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 text-gray-400">
-                    Jersey Name
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={12}
-                    value={customName}
-                    onChange={(e) => {
-                      setCustomName(e.target.value.toUpperCase());
-                      setIsFlipped(true);
-                    }}
-                    className={`w-full border rounded-xl px-3 py-2 text-xs font-black uppercase font-montserrat focus:outline-none focus:border-[#FF6321] ${
-                      isDarkMode ? 'bg-[#0a0a0a] border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                {/* Custom Number */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 text-gray-400">
-                    Squad Number
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={customNumber}
-                    onChange={(e) => {
-                      setCustomNumber(Number(e.target.value));
-                      setIsFlipped(true);
-                    }}
-                    className={`w-full border rounded-xl px-3 py-2 text-xs font-black font-montserrat focus:outline-none focus:border-[#FF6321] ${
-                      isDarkMode ? 'bg-[#0a0a0a] border-white/10 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  />
-                </div>
-
-                {/* Print Color */}
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider mb-1 text-gray-400">
-                    Font Color
-                  </label>
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    {['#FFFFFF', '#FF6321', '#F59E0B', '#38bdf8', '#000000'].map((col) => (
-                      <button
-                        key={col}
-                        onClick={() => {
-                          setNumberColor(col);
-                          setIsFlipped(true);
-                        }}
-                        className={`w-7 h-7 rounded-full border transition-transform cursor-pointer ${
-                          numberColor === col ? 'scale-110 border-[#FF6321] ring-2 ring-[#FF6321]/30' : 'border-white/20'
-                        }`}
-                        style={{ backgroundColor: col }}
-                      />
-                    ))}
-                  </div>
+                  <h4 className="text-xs font-black uppercase tracking-wider font-montserrat">
+                    {activeKit.name}
+                  </h4>
+                  <p className={`text-[11px] ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
+                    {activeKit.description}
+                  </p>
                 </div>
               </div>
+              <span className="px-3 py-1 rounded-full bg-[#FF6321]/15 text-[#FF6321] text-[10px] font-black uppercase italic">
+                Official Armor
+              </span>
             </div>
           </div>
         </div>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF6321"/>
+      <stop offset="100%" stop-color="#D93800"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Shield Badge -->
+  <path d="M 250 30 L 430 90 L 410 350 L 250 470 L 90 350 L 70 90 Z" fill="url(#orangeGrad)" stroke="url(#goldGrad)" stroke-width="8" filter="url(#shadow)" />
+  
+  <!-- Inner Shield Accent -->
+  <path d="M 250 50 L 410 105 L 392 340 L 250 448 L 108 340 L 90 105 Z" fill="#0A0A0A" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="3" />
+
+  <!-- Diagonal Stripe Accent -->
+  <path d="M 120 120 L 380 380 L 350 405 L 90 145 Z" fill="url(#orangeGrad)" opacity="0.3"/>
+
+  <!-- Football Graphic -->
+  <g transform="translate(250, 220)">
+    <circle r="65" fill="#FFFFFF" stroke="#111111" stroke-width="4"/>
+    <!-- Pentagon & Lines -->
+    <polygon points="0,-25 22,-8 14,18 -14,18 -22,-8" fill="#111111"/>
+    <line x1="0" y1="-25" x2="0" y2="-65" stroke="#111111" stroke-width="3"/>
+    <line x1="22" y1="-8" x2="58" y2="-20" stroke="#111111" stroke-width="3"/>
+    <line x1="14" y1="18" x2="38" y2="52" stroke="#111111" stroke-width="3"/>
+    <line x1="-14" y1="18" x2="-38" y2="52" stroke="#111111" stroke-width="3"/>
+    <line x1="-22" y1="-8" x2="-58" y2="-20" stroke="#111111" stroke-width="3"/>
+  </g>
+
+  <!-- Banner Star Elements -->
+  <polygon points="250,95 255,108 268,108 257,116 261,129 250,121 239,129 243,116 232,108 245,108" fill="url(#goldGrad)"/>
+
+  <!-- MARENYO FC Typography -->
+  <text x="250" y="340" text-anchor="middle" fill="#FFFFFF" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="44" font-style="italic" letter-spacing="2">MARENYO</text>
+  <text x="250" y="380" text-anchor="middle" fill="#FF6321" font-family="'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="36" font-style="italic" letter-spacing="4">FC</text>
+
+  <!-- Subtitle Tagline -->
+  <text x="250" y="420" text-anchor="middle" fill="#F59E0B" font-family="sans-serif" font-weight="800" font-size="14" letter-spacing="3">SAGAM • GEM • 2012</text>
+</svg>

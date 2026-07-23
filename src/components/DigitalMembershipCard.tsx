@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, MapPin, Download } from 'lucide-react';
 import { FanTier } from '../types';
+import { CLUB_INFO } from '../data/clubData';
 
 interface DigitalMembershipCardProps {
   name: string;
@@ -25,149 +26,172 @@ export const downloadPassCardImage = (
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Background Dark Gradient
-  const grad = ctx.createLinearGradient(0, 0, 800, 500);
-  grad.addColorStop(0, '#18181b');
-  grad.addColorStop(0.5, '#0f0f12');
-  grad.addColorStop(1, '#050507');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 800, 500);
+  const drawCard = (logoImg?: HTMLImageElement) => {
+    // Background Dark Gradient
+    const grad = ctx.createLinearGradient(0, 0, 800, 500);
+    grad.addColorStop(0, '#18181b');
+    grad.addColorStop(0.5, '#0f0f12');
+    grad.addColorStop(1, '#050507');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 800, 500);
 
-  // Border & Rounded Outer Card Frame
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(10, 10, 780, 480);
+    // Border & Rounded Outer Card Frame
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(10, 10, 780, 480);
 
-  // Orange Top Accent Strip
-  ctx.fillStyle = '#FF6321';
-  ctx.fillRect(10, 10, 780, 12);
+    // Orange Top Accent Strip
+    ctx.fillStyle = '#FF6321';
+    ctx.fillRect(10, 10, 780, 12);
 
-  // Corner Accent Glow Triangle
-  ctx.fillStyle = 'rgba(255, 99, 33, 0.12)';
-  ctx.beginPath();
-  ctx.moveTo(800, 220);
-  ctx.lineTo(800, 10);
-  ctx.lineTo(580, 10);
-  ctx.closePath();
-  ctx.fill();
+    // Corner Accent Glow Triangle
+    ctx.fillStyle = 'rgba(255, 99, 33, 0.12)';
+    ctx.beginPath();
+    ctx.moveTo(800, 220);
+    ctx.lineTo(800, 10);
+    ctx.lineTo(580, 10);
+    ctx.closePath();
+    ctx.fill();
 
-  // Header Logo Box ("M")
-  ctx.fillStyle = '#FF6321';
-  ctx.beginPath();
-  ctx.roundRect(40, 50, 60, 60, 12);
-  ctx.fill();
+    // Header Logo Box with Marenyo FC Crest Image
+    if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(40, 45, 65, 65, 14);
+      ctx.clip();
+      ctx.drawImage(logoImg, 40, 45, 65, 65);
+      ctx.restore();
 
-  ctx.fillStyle = '#000000';
-  ctx.font = '900 italic 36px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('M', 70, 93);
+      ctx.strokeStyle = '#FF6321';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(40, 45, 65, 65, 14);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#FF6321';
+      ctx.beginPath();
+      ctx.roundRect(40, 50, 60, 60, 12);
+      ctx.fill();
 
-  // Header Titles
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '900 italic 28px sans-serif';
-  ctx.fillText('MARENYO FC', 120, 80);
+      ctx.fillStyle = '#000000';
+      ctx.font = '900 italic 36px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('M', 70, 93);
+    }
 
-  ctx.fillStyle = '#FF6321';
-  ctx.font = '700 14px sans-serif';
-  ctx.fillText('OFFICIAL FAN CLUB PASS • SAGAM, GEM', 120, 102);
+    // Header Titles
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 italic 28px sans-serif';
+    ctx.fillText('MARENYO FC', 120, 80);
 
-  // Tier Badge Box
-  let badgeText = 'SUPPORTER';
-  if (tier === 'Former Player') badgeText = 'LEGEND';
-  if (tier === 'Current Star') badgeText = 'STAR PLAYER';
-  if (tier === 'Future Talent') badgeText = 'FUTURE TALENT';
+    ctx.fillStyle = '#FF6321';
+    ctx.font = '700 14px sans-serif';
+    ctx.fillText('OFFICIAL FAN CLUB PASS • SAGAM, GEM', 120, 102);
 
-  ctx.fillStyle = '#000000';
-  ctx.strokeStyle = '#FF6321';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(580, 50, 180, 44, 22);
-  ctx.fill();
-  ctx.stroke();
+    // Tier Badge Box
+    let badgeText = 'SUPPORTER';
+    if (tier === 'Former Player') badgeText = 'LEGEND';
+    if (tier === 'Current Star') badgeText = 'STAR PLAYER';
+    if (tier === 'Future Talent') badgeText = 'FUTURE TALENT';
 
-  ctx.fillStyle = '#FF6321';
-  ctx.font = '900 italic 16px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(badgeText, 670, 78);
+    ctx.fillStyle = '#000000';
+    ctx.strokeStyle = '#FF6321';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(580, 50, 180, 44, 22);
+    ctx.fill();
+    ctx.stroke();
 
-  // Separator Line
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(40, 140);
-  ctx.lineTo(760, 140);
-  ctx.stroke();
+    ctx.fillStyle = '#FF6321';
+    ctx.font = '900 italic 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeText, 670, 78);
 
-  // Avatar / Shield Frame Box
-  ctx.fillStyle = '#0a0a0c';
-  ctx.strokeStyle = 'rgba(255, 99, 33, 0.4)';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.roundRect(40, 170, 120, 120, 18);
-  ctx.fill();
-  ctx.stroke();
+    // Separator Line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(40, 140);
+    ctx.lineTo(760, 140);
+    ctx.stroke();
 
-  // Shield Icon inside frame
-  ctx.fillStyle = '#FF6321';
-  ctx.font = '900 50px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🛡️', 100, 245);
+    // Avatar / Shield Frame Box
+    ctx.fillStyle = '#0a0a0c';
+    ctx.strokeStyle = 'rgba(255, 99, 33, 0.4)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(40, 170, 120, 120, 18);
+    ctx.fill();
+    ctx.stroke();
 
-  // Member Details Text
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = '700 13px sans-serif';
-  ctx.fillText('OFFICIAL MEMBER NAME', 180, 190);
+    // Shield Icon inside frame
+    ctx.fillStyle = '#FF6321';
+    ctx.font = '900 50px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🛡️', 100, 245);
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '900 italic 34px sans-serif';
-  ctx.fillText((name || 'MARENYO SUPPORTER').toUpperCase(), 180, 230);
+    // Member Details Text
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '700 13px sans-serif';
+    ctx.fillText('OFFICIAL MEMBER NAME', 180, 190);
 
-  ctx.fillStyle = '#FF6321';
-  ctx.font = '700 18px sans-serif';
-  ctx.fillText(`📍 ${village || 'Sagam, Gem, Kenya'}`, 180, 265);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 italic 34px sans-serif';
+    ctx.fillText((name || 'MARENYO SUPPORTER').toUpperCase(), 180, 230);
 
-  // Footer Separator Line
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.beginPath();
-  ctx.moveTo(40, 360);
-  ctx.lineTo(760, 360);
-  ctx.stroke();
+    ctx.fillStyle = '#FF6321';
+    ctx.font = '700 18px sans-serif';
+    ctx.fillText(`📍 ${village || 'Sagam, Gem, Kenya'}`, 180, 265);
 
-  // Member ID
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = '700 12px sans-serif';
-  ctx.fillText('MEMBER ID NUMBER', 40, 395);
+    // Footer Separator Line
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.beginPath();
+    ctx.moveTo(40, 360);
+    ctx.lineTo(760, 360);
+    ctx.stroke();
 
-  ctx.fillStyle = '#FF6321';
-  ctx.font = '900 monospace italic 26px sans-serif';
-  ctx.fillText(memberId || 'MFC-2026-8841', 40, 430);
+    // Member ID
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '700 12px sans-serif';
+    ctx.fillText('MEMBER ID NUMBER', 40, 395);
 
-  // Joined Date
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#9ca3af';
-  ctx.font = '700 12px sans-serif';
-  ctx.fillText('DATE ISSUED', 760, 395);
+    ctx.fillStyle = '#FF6321';
+    ctx.font = '900 monospace italic 26px sans-serif';
+    ctx.fillText(memberId || 'MFC-2026-8841', 40, 430);
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 22px sans-serif';
-  ctx.fillText(joinedDate || 'July 2026', 760, 430);
+    // Joined Date
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '700 12px sans-serif';
+    ctx.fillText('DATE ISSUED', 760, 395);
 
-  // Bottom Watermark
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.font = '600 italic 11px sans-serif';
-  ctx.fillText('MARENYO FOOTBALL CLUB • ONCE MARENYO, ALWAYS MARENYO • SAGAM, GEM', 400, 475);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 22px sans-serif';
+    ctx.fillText(joinedDate || 'July 2026', 760, 430);
 
-  // Trigger Download
-  const dataUrl = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `MarenyoFC_Pass_${memberId.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-  link.href = dataUrl;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    // Bottom Watermark
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = '600 italic 11px sans-serif';
+    ctx.fillText('MARENYO FOOTBALL CLUB • ONCE MARENYO, ALWAYS MARENYO • SAGAM, GEM', 400, 475);
+
+    // Trigger Download
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `MarenyoFC_Pass_${memberId.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = CLUB_INFO.logoUrl;
+  img.onload = () => drawCard(img);
+  img.onerror = () => drawCard();
 };
 
 export const DigitalMembershipCard: React.FC<DigitalMembershipCardProps> = ({
@@ -212,16 +236,16 @@ export const DigitalMembershipCard: React.FC<DigitalMembershipCardProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#FF6321] text-black font-black italic flex items-center justify-center text-lg shadow-md">
-              M
+            <div className="w-10 h-10 rounded-xl bg-black border border-[#FF6321]/40 p-0.5 overflow-hidden flex items-center justify-center shadow-md">
+              <img src={CLUB_INFO.logoUrl} alt="Marenyo FC Crest" className="w-full h-full object-cover rounded-lg" />
             </div>
             <div>
               <h4 className="font-black italic text-sm tracking-wider text-white uppercase">MARENYO FC</h4>
-              <p className="text-[9px] text-[#FF6321] font-bold uppercase tracking-widest -mt-0.5">FAN CLUB PASS</p>
+              <p className="text-[9px] text-[#FF6321] font-bold uppercase tracking-widest -mt-0.5">FAN CLUB PASS • SAGAM, GEM</p>
             </div>
           </div>
 
-          <span className="px-3 py-1 bg-[#0a0a0a] border border-white/15 text-[9px] font-black italic uppercase tracking-wider text-[#FF6321] rounded-full">
+          <span className="px-3 py-1 bg-[#0a0a0a] border border-[#FF6321]/40 text-[9px] font-black italic uppercase tracking-wider text-[#FF6321] rounded-full shadow-lg shadow-[#FF6321]/10">
             {getBadgeTitle(tier)}
           </span>
         </div>

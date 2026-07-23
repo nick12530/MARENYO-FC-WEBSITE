@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Shield, Menu, X, Flame, Users, Calendar, Image, PhoneCall, Trophy, Sun, Moon, Lock, Globe, Shirt, ChevronDown, Check, User as UserIcon, LogOut } from 'lucide-react';
 import { Language, TRANSLATIONS } from '../data/translations';
 import { User } from '../types';
+import { CLUB_INFO } from '../data/clubData';
 
 interface NavbarProps {
   onOpenFanClubModal: () => void;
@@ -117,8 +118,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={(e) => scrollToSection(e, '#home')}
             className="flex items-center gap-2.5 group cursor-pointer"
           >
-            <div className="w-10 h-10 bg-[#FF6321] rounded-full flex items-center justify-center font-black italic text-black text-lg shadow-md group-hover:scale-105 transition-transform">
-              M
+            <div className="w-10 h-10 rounded-full bg-[#FF6321]/20 border border-[#FF6321] overflow-hidden flex items-center justify-center p-0.5 shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
+              <img src={CLUB_INFO.logoUrl} alt="Marenyo FC Crest" className="w-full h-full object-cover rounded-full" />
             </div>
             <div className="flex flex-col">
               <span
@@ -247,6 +248,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : (
               <button
+                id="header-sign-in-btn"
+                type="button"
                 onClick={onOpenAuthModal}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs font-black uppercase italic transition-all cursor-pointer ${
                   isDarkMode
@@ -314,6 +317,40 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div className="flex flex-col space-y-2">
+            {/* Mobile Auth Button */}
+            {currentUser ? (
+              <div className="flex items-center justify-between p-3 rounded-2xl border bg-[#FF6321]/10 border-[#FF6321]/30 mb-2">
+                <div className="flex items-center gap-2">
+                  <UserIcon className="w-4 h-4 text-[#FF6321]" />
+                  <span className="text-xs font-black italic uppercase text-white truncate max-w-[150px]">
+                    {currentUser.name}
+                  </span>
+                </div>
+                {onLogout && (
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="p-1.5 rounded-lg bg-red-500/20 text-red-400 text-xs font-bold"
+                  >
+                    Log Out
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  if (onOpenAuthModal) onOpenAuthModal();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 px-4 rounded-full bg-[#FF6321] text-black font-black uppercase italic text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg mb-2 cursor-pointer"
+              >
+                <UserIcon className="w-4 h-4 text-black" />
+                <span>Sign In / Join Fan Club</span>
+              </button>
+            )}
+
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = activeSection === link.id;

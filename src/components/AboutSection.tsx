@@ -49,8 +49,8 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ isDarkMode = true })
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-500/20 mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#FF6321] text-black flex items-center justify-center font-black italic text-2xl shadow-lg shadow-[#FF6321]/20">
-                M
+              <div className="w-12 h-12 rounded-2xl bg-black border border-[#FF6321]/50 overflow-hidden flex items-center justify-center p-0.5 shadow-lg shadow-[#FF6321]/20 flex-shrink-0">
+                <img src={CLUB_INFO.logoUrl} alt="Marenyo FC Crest" className="w-full h-full object-cover rounded-xl" />
               </div>
               <div>
                 <h3 className="text-xl font-black italic uppercase tracking-tight font-montserrat">

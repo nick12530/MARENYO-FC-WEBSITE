@@ -3,6 +3,7 @@ import { Users, Calendar, ArrowDown, Shield, Shirt } from 'lucide-react';
 import { CLUB_INFO } from '../data/clubData';
 import { AnimatedCounter } from './AnimatedCounter';
 import { Language, TRANSLATIONS } from '../data/translations';
+import heroImg from '../assets/heroimage.jpeg';
 
 interface HeroProps {
   onExploreSquad: () => void;
@@ -36,8 +37,8 @@ export const Hero: React.FC<HeroProps> = ({
       {/* Background Image with Vignette & Glass overlays */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1600&auto=format&fit=crop"
-          alt="Marenyo FC Stadium & Fans"
+          src={heroImg}
+          alt="Marenyo FC Team & Fans"
           className={`w-full h-full object-cover object-center filter contrast-125 scale-105 ${
             isDarkMode ? 'opacity-35' : 'opacity-15 mix-blend-multiply'
           }`}
@@ -99,7 +100,7 @@ export const Hero: React.FC<HeroProps> = ({
             </button>
 
             <button
-              onClick={() => scrollToSection('jerseys')}
+              onClick={() => scrollToSection('kits')}
               className={`px-8 py-4 rounded-full font-black uppercase italic text-xs tracking-wider backdrop-blur-md border transition-all cursor-pointer flex items-center gap-2 ${
                 isDarkMode
                   ? 'bg-white/15 border-white/30 text-white hover:bg-[#FF6321] hover:text-black hover:border-[#FF6321]'

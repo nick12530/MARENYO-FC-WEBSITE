@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Search, Star, Shield, Award, ChevronRight, Users, Maximize2, X, Filter, Crown } from 'lucide-react';
 import { Player } from '../types';
 import { PlayerModal } from './PlayerModal';
+import { CLUB_INFO } from '../data/clubData';
 
 interface PlayerProfileSectionProps {
   players: Player[];
@@ -149,8 +150,21 @@ export const PlayerProfileSection: React.FC<PlayerProfileSectionProps> = ({
           </div>
         </div>
 
-        {/* Uncrowded 4-Card Spotlight Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Player Roster Grid or Empty State */}
+        {previewPlayers.length === 0 ? (
+          <div className={`p-10 sm:p-14 text-center rounded-3xl border backdrop-blur-xl ${
+            isDarkMode ? 'bg-[#111111]/70 border-white/10 text-gray-300' : 'bg-white/80 border-slate-200 text-slate-700'
+          }`}>
+            <Users className="w-12 h-12 text-[#FF6321] mx-auto mb-3 animate-pulse" />
+            <h3 className="text-xl font-black italic uppercase tracking-tight text-white mb-2">
+              No Player Profiles Added Yet
+            </h3>
+            <p className={`text-xs max-w-md mx-auto mb-6 ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
+              The squad roster is clean and ready for real player profiles. Open the Admin Portal at the bottom of the website to add players.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {previewPlayers.map((player) => (
             <div
               key={player.id}
@@ -230,6 +244,7 @@ export const PlayerProfileSection: React.FC<PlayerProfileSectionProps> = ({
             </div>
           ))}
         </div>
+        )}
 
         {/* Banner to open full Tab when there are more players */}
         {filteredPlayers.length > 4 && (
@@ -242,7 +257,7 @@ export const PlayerProfileSection: React.FC<PlayerProfileSectionProps> = ({
                   : 'bg-white text-slate-800 border-slate-200 hover:border-[#FF6321] hover:text-[#FF6321] shadow-sm'
               }`}
             >
-              <span>Explore All {filteredPlayers.length} {selectedPosition} Profiles</span>
+              <span>Explore All {filteredPlayers.length} {selectedPosition === 'All' ? '' : selectedPosition} Profiles</span>
               <ChevronRight className="w-4 h-4 text-[#FF6321]" />
             </button>
           </div>
@@ -264,8 +279,8 @@ export const PlayerProfileSection: React.FC<PlayerProfileSectionProps> = ({
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#FF6321] text-black font-black italic flex items-center justify-center text-lg">
-                  M
+                <div className="w-10 h-10 rounded-full bg-black border border-[#FF6321] overflow-hidden flex items-center justify-center p-0.5 shadow-md flex-shrink-0">
+                  <img src={CLUB_INFO.logoUrl} alt="Marenyo FC Crest" className="w-full h-full object-cover rounded-full" />
                 </div>
                 <div>
                   <h3 className="text-xl font-black italic uppercase tracking-tight">

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X, User as UserIcon, Mail, Lock, MapPin, Sparkles, LogIn, UserPlus, CheckCircle2 } from 'lucide-react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase';
 import { User } from '../types';
+import { downloadPassCardImage } from './DigitalMembershipCard';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -22,82 +25,206 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [village, setVillage] = useState('Sagam, Gem');
+  const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (mode === 'signup') {
-      if (!name.trim() || !email.trim()) return;
-      const memberNum = Math.floor(1000 + Math.random() * 9000);
-      const newUser: User = {
-        id: `u-${Date.now()}`,
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        village: village.trim() || 'Sagam, Gem',
-        joinedDate: 'July 2026',
-        memberId: `MFC-2026-${memberNum}`,
-      };
-      localStorage.setItem('marenyo_user', JSON.stringify(newUser));
-      onLoginSuccess(newUser);
-      setSuccessMsg('Account created successfully! Welcome to the Marenyo FC Family.');
-      setTimeout(() => {
-        setSuccessMsg('');
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         onClose();
-      }, 1200);
-    } else {
-      if (!email.trim()) return;
-      // Demo log in
-      const existingUserStr = localStorage.getItem('marenyo_user');
-      let userObj: User;
-      if (existingUserStr) {
-        userObj = JSON.parse(existingUserStr);
-        if (email.trim().toLowerCase() !== userObj.email.toLowerCase()) {
-          userObj.email = email.trim();
-        }
-      } else {
-        const memberNum = Math.floor(1000 + Math.random() * 9000);
-        userObj = {
-          id: `u-${Date.now()}`,
-          name: email.split('@')[0] || 'Marenyo Fan',
-          email: email.trim().toLowerCase(),
-          village: village || 'Sagam, Gem',
-          joinedDate: 'July 2026',
-          memberId: `MFC-2026-${memberNum}`,
-        };
       }
-      localStorage.setItem('marenyo_user', JSON.stringify(userObj));
-      onLoginSuccess(userObj);
-      setSuccessMsg('Logged in successfully!');
-      setTimeout(() => {
-        setSuccessMsg('');
-        onClose();
-      }, 1000);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const persistUserLocally = (user: User, passwordHash?: string) => {
+    let registeredUsers: (User & { password?: string })[] = [];
+    try {
+      const registeredUsersStr = localStorage.getItem('marenyo_registered_users');
+      if (registeredUsersStr) {
+        const parsed = JSON.parse(registeredUsersStr);
+        if (Array.isArray(parsed)) registeredUsers = parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const existingIndex = registeredUsers.findIndex((u) => u.email === user.email);
+    const entry = passwordHash ? { ...user, password: passwordHash } : user;
+    if (existingIndex >= 0) {
+      registeredUsers[existingIndex] = { ...registeredUsers[existingIndex], ...entry };
+    } else {
+      registeredUsers.push(entry);
+    }
+    localStorage.setItem('marenyo_registered_users', JSON.stringify(registeredUsers));
+    localStorage.setItem('marenyo_user', JSON.stringify(user));
+  };
+
+  const addToFanRegistry = (user: User) => {
+    let fanMembers: any[] = [];
+    try {
+      const fanMembersStr = localStorage.getItem('marenyo_fanmembers');
+      if (fanMembersStr) {
+        const parsed = JSON.parse(fanMembersStr);
+        if (Array.isArray(parsed)) fanMembers = parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+
+    if (!fanMembers.some((m) => m.email === user.email || m.id === user.id)) {
+      fanMembers.push({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        memberId: user.memberId,
+        tier: 'Supporter',
+        village: user.village,
+        joinedDate: user.joinedDate,
+        status: 'Active',
+      });
+      localStorage.setItem('marenyo_fanmembers', JSON.stringify(fanMembers));
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setIsLoading(true);
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    try {
+      if (mode === 'signup') {
+        if (!name.trim() || !cleanEmail || !password) {
+          setIsLoading(false);
+          return;
+        }
+
+        await createUserWithEmailAndPassword(auth, cleanEmail, password);
+
+        const memberNum = Math.floor(1000 + Math.random() * 9000);
+        const newUser: User = {
+          id: `u-${Date.now()}`,
+          name: name.trim(),
+          email: cleanEmail,
+          village: village.trim() || 'Sagam, Gem',
+          joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          memberId: `MFC-2026-${memberNum}`,
+        };
+
+        persistUserLocally(newUser);
+        addToFanRegistry(newUser);
+        onLoginSuccess(newUser);
+
+        setSuccessMsg('Account created! Your Fan Pass is downloading now...');
+
+        setTimeout(() => {
+          downloadPassCardImage(
+            newUser.name,
+            'Supporter',
+            newUser.memberId || `MFC-2026-${memberNum}`,
+            newUser.village || 'Sagam, Gem',
+            newUser.joinedDate || 'July 2026'
+          );
+        }, 600);
+
+        setTimeout(() => {
+          setSuccessMsg('');
+          onClose();
+        }, 2500);
+      } else {
+        if (!cleanEmail || !password) {
+          setIsLoading(false);
+          return;
+        }
+
+        const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+
+        let registeredUsers: User[] = [];
+        try {
+          const saved = localStorage.getItem('marenyo_registered_users');
+          if (saved) registeredUsers = JSON.parse(saved);
+        } catch {
+          /* ignore */
+        }
+
+        let userObj = registeredUsers.find((u) => u.email === cleanEmail);
+
+        if (!userObj) {
+          const memberNum = Math.floor(1000 + Math.random() * 9000);
+          userObj = {
+            id: credential.user.uid,
+            name: credential.user.displayName || cleanEmail.split('@')[0] || 'Marenyo Fan',
+            email: cleanEmail,
+            village: village || 'Sagam, Gem',
+            joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            memberId: `MFC-2026-${memberNum}`,
+          };
+        }
+
+        persistUserLocally(userObj);
+        onLoginSuccess(userObj);
+        setSuccessMsg('Logged in successfully!');
+        setTimeout(() => {
+          setSuccessMsg('');
+          onClose();
+        }, 1000);
+      }
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/email-already-in-use') {
+        setErrorMsg('An account with this email already exists. Please log in.');
+        setMode('login');
+      } else if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        setErrorMsg('Invalid email or password. Please try again.');
+      } else if (code === 'auth/weak-password') {
+        setErrorMsg('Password must be at least 6 characters.');
+      } else {
+        setErrorMsg(err?.message || 'Authentication failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer"
+    >
       <div
-        className={`relative w-full max-w-md rounded-3xl border shadow-2xl overflow-hidden p-6 sm:p-8 transition-all ${
+        onClick={(e) => e.stopPropagation()}
+        className={`relative w-full max-w-md rounded-3xl border shadow-2xl overflow-hidden p-6 sm:p-8 transition-all cursor-default ${
           isDarkMode
             ? 'bg-[#111111] border-white/10 text-white'
             : 'bg-white border-slate-200 text-slate-900'
         }`}
       >
-        {/* Close Button */}
         <button
-          onClick={onClose}
-          className={`absolute top-5 right-5 p-2 rounded-full transition-colors ${
+          id="close-auth-modal-btn"
+          data-testid="close-auth-modal-btn"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className={`absolute top-5 right-5 p-2.5 rounded-full transition-colors cursor-pointer z-10 ${
             isDarkMode ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
+          aria-label="Close modal"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
 
-        {/* Modal Brand Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-[#FF6321] text-black font-black italic text-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-[#FF6321]/30">
             M
@@ -110,7 +237,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </p>
         </div>
 
-        {/* Success Banner */}
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-2xl bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold text-center">
+            {errorMsg}
+          </div>
+        )}
+
         {successMsg ? (
           <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-center text-xs font-bold flex flex-col items-center gap-2">
             <CheckCircle2 className="w-8 h-8 text-emerald-400 animate-bounce" />
@@ -118,7 +250,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         ) : (
           <>
-            {/* Tab Selector */}
             <div
               className={`flex items-center p-1 rounded-full mb-6 border ${
                 isDarkMode ? 'bg-[#0a0a0a] border-white/10' : 'bg-slate-100 border-slate-200'
@@ -152,7 +283,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'signup' && (
                 <div>
@@ -202,13 +332,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <label className={`block text-[10px] font-bold uppercase tracking-widest mb-1 ${
                   isDarkMode ? 'text-gray-400' : 'text-slate-500'
                 }`}>
-                  Password
+                  Password *
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-gray-500" />
                   <input
                     type="password"
                     required
+                    minLength={6}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -243,10 +374,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-2xl bg-[#FF6321] text-black font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer shadow-lg shadow-[#FF6321]/20 mt-2 flex items-center justify-center gap-2"
+                disabled={isLoading}
+                className="w-full py-3.5 rounded-2xl bg-[#FF6321] text-black font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer shadow-lg shadow-[#FF6321]/20 mt-2 flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{mode === 'signup' ? 'Create Account & Continue' : 'Log In & Continue'}</span>
+                <span>
+                  {isLoading
+                    ? 'Please wait...'
+                    : mode === 'signup'
+                    ? 'Create Account & Download Pass'
+                    : 'Log In & Continue'}
+                </span>
               </button>
             </form>
           </>

@@ -1,13 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Trophy, CheckCircle2, Clock } from 'lucide-react';
+import { MatchFixture } from '../types';
 import { FIXTURES } from '../data/clubData';
 
 interface FixturesSectionProps {
+  fixtures?: MatchFixture[];
   isDarkMode?: boolean;
 }
 
-export const FixturesSection: React.FC<FixturesSectionProps> = ({ isDarkMode = true }) => {
+export const FixturesSection: React.FC<FixturesSectionProps> = ({
+  fixtures = FIXTURES,
+  isDarkMode = true,
+}) => {
   return (
     <section
       id="fixtures"
@@ -36,9 +41,22 @@ export const FixturesSection: React.FC<FixturesSectionProps> = ({ isDarkMode = t
           </p>
         </motion.div>
 
-        {/* Fixtures Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FIXTURES.map((match) => {
+        {/* Fixtures Grid or Empty State */}
+        {fixtures.length === 0 ? (
+          <div className={`p-10 sm:p-14 text-center rounded-3xl border backdrop-blur-xl ${
+            isDarkMode ? 'bg-[#111111]/70 border-white/10 text-gray-300' : 'bg-white/80 border-slate-200 text-slate-700'
+          }`}>
+            <Calendar className="w-12 h-12 text-[#FF6321] mx-auto mb-3 animate-pulse" />
+            <h3 className="text-xl font-black italic uppercase tracking-tight text-white mb-2">
+              No Match Fixtures Scheduled Yet
+            </h3>
+            <p className={`text-xs max-w-md mx-auto ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
+              The match calendar is ready for live scheduling. Log in to the Admin Portal at the bottom of the page to add fixtures.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {fixtures.map((match) => {
             const isCompleted = match.status === 'completed';
             return (
               <div
@@ -124,6 +142,7 @@ export const FixturesSection: React.FC<FixturesSectionProps> = ({ isDarkMode = t
             );
           })}
         </div>
+        )}
       </div>
     </section>
   );

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, CheckCircle2, Play, Volume2, Shield, Lock, UserPlus, LogIn } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { FanTier, User } from '../types';
-import { DigitalMembershipCard } from './DigitalMembershipCard';
+import { DigitalMembershipCard, downloadPassCardImage } from './DigitalMembershipCard';
 
 interface FanClubSectionProps {
   isDarkMode?: boolean;
@@ -55,6 +55,16 @@ export const FanClubSection: React.FC<FanClubSectionProps> = ({
       origin: { y: 0.6 },
       colors: ['#FF6321', '#F59E0B', '#111827'],
     });
+
+    setTimeout(() => {
+      downloadPassCardImage(
+        memberName.trim(),
+        memberTier,
+        newId,
+        village || 'Sagam, Gem',
+        currentUser.joinedDate || 'July 2026'
+      );
+    }, 800);
   };
 
   const toggleAnthem = () => {
