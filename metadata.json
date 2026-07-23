@@ -1,0 +1,6 @@
+{
+  "name": "MARENYO FC",
+  "description": "Official website for Marenyo Football Club & Fan Club based in Sagam, Gem. Featuring team history, squad roster, interactive gallery, match fixtures, and fan club membership.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

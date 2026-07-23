@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@layer base {
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #0a0a0a;
+    color: #ffffff;
+  }
+}
+
+.font-gothic {
+  font-family: 'UnifrakturMaguntia', 'Pirata One', 'Cinzel Decorative', cursive, serif;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel Decorative', serif;
+}
+
+.font-pirata {
+  font-family: 'Pirata One', cursive;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+}
+
+.bg-brand-orange {
+  background-color: #FF6321;
+}
+
+.text-brand-orange {
+  color: #FF6321;
+}
+
+.border-brand-orange {
+  border-color: #FF6321;
+}
