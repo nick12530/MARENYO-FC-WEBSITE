@@ -219,7 +219,7 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
                             <img
                               src={kit.customFrontImage}
                               alt={kit.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain p-1"
                             />
                           ) : (
                             <div
@@ -279,7 +279,7 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
           {/* RIGHT COLUMN: 3D INTERACTIVE JERSEY SHOWCASE & PERSONALIZATION */}
           <div className="lg:col-span-8 flex flex-col items-center">
             {/* 3D Jersey Display Area */}
-            <div className="relative w-full max-w-lg aspect-[4/5] sm:aspect-[1/1] flex items-center justify-center mb-6">
+            <div className="relative w-full max-w-lg aspect-[3/4] sm:aspect-[4/5] flex items-center justify-center mb-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeKit.id}-${isFlipped ? 'back' : 'front'}`}
@@ -314,19 +314,19 @@ export const JerseysSection: React.FC<JerseysSectionProps> = ({
                     </div>
 
                     {/* JERSEY IMAGE / VECTOR SHOWCASE */}
-                    <div className="relative w-full flex-1 flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-black/20 p-2 border border-white/5">
+                    <div className="relative w-full flex-1 flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-black/20 p-4 border border-white/5">
                       {/* Check if custom front/back image was uploaded in Admin */}
                       {!isFlipped && activeKit.customFrontImage ? (
                         <img
                           src={activeKit.customFrontImage}
                           alt={`${activeKit.name} Front`}
-                          className="w-full h-full object-contain max-h-[320px] rounded-xl shadow-lg animate-in fade-in"
+                          className="w-full h-full object-contain drop-shadow-2xl animate-in fade-in"
                         />
                       ) : isFlipped && activeKit.customBackImage ? (
                         <img
                           src={activeKit.customBackImage}
                           alt={`${activeKit.name} Back`}
-                          className="w-full h-full object-contain max-h-[320px] rounded-xl shadow-lg animate-in fade-in"
+                          className="w-full h-full object-contain drop-shadow-2xl animate-in fade-in"
                         />
                       ) : (
                         /* HIGH-FIDELITY VECTOR JERSEY RENDERING */

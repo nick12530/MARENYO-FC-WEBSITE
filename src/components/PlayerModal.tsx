@@ -71,7 +71,7 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({ player, onClose, isDar
           <img
             src={player.photoUrl}
             alt={player.name}
-            className="w-full h-full object-cover object-top filter brightness-90"
+            className="w-full h-full object-contain object-bottom filter brightness-90"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />

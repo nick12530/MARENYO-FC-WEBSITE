@@ -90,7 +90,7 @@ export const Hero: React.FC<HeroProps> = ({
           </p>
 
           {/* Hero Navigation Buttons */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-6">
             <button
               onClick={() => scrollToSection('profiles')}
               className="bg-[#FF6321] text-black px-8 py-4 rounded-full font-black uppercase italic text-xs tracking-wider hover:bg-black hover:text-white transition-all cursor-pointer flex items-center gap-2 shadow-xl shadow-[#FF6321]/30 hover:scale-105"
@@ -125,7 +125,7 @@ export const Hero: React.FC<HeroProps> = ({
           </div>
 
           {/* Animated Quick Stats Grid - Glassmorphism */}
-          <div className={`mt-14 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t pt-8 ${
+          <div className={`mt-16 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t pt-8 ${
             isDarkMode ? 'border-white/10' : 'border-slate-200'
           }`}>
             {CLUB_INFO.stats.map((stat, idx) => (

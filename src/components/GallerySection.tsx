@@ -127,6 +127,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                   referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
@@ -190,6 +191,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({
                   alt={filteredItems[activeItemIndex].title}
                   className="max-h-[75vh] w-auto max-w-full object-contain"
                   referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
 
                 <button

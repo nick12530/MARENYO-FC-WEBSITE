@@ -41,7 +41,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ isDarkMode = true })
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className={`border rounded-3xl p-6 sm:p-10 mb-12 backdrop-blur-xl shadow-xl transition-all ${
+          className={`border rounded-3xl p-6 sm:p-10 mb-16 backdrop-blur-xl shadow-xl transition-all ${
             isDarkMode
               ? 'bg-[#111111]/80 border-white/10'
               : 'bg-white/80 border-slate-200/80'
